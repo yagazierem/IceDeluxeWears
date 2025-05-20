@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -11,3 +15,83 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+.fade-in {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 3s ease-out, transform 3s ease-out;
+}
+
+.fade-in-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+#typewriter_body {
+  position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #FCFFFF;
+    z-index: 99999;
+    overflow: hidden !important;
+    backdrop-filter: blur(7px);
+}
+
+
+.typewriter_container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  }
+  
+  .typewriter_h1 {
+  /* color: #dbd56e; */
+  color: #111827;
+  background: -webkit-linear-gradient(15deg, #eee, #333);
+  /* background: -webkit-linear-gradient(25deg, #0D6BFF, #DFECFF); */
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-size: 7rem;
+  /* font-weight: 800; */
+  text-align: center;
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: 2px solid;
+  animation: type 4.5s steps(90) 0.5s 1 normal both;
+  position: relative;
+  }
+
+  .dancing-script-600 {
+    font-family:   'Comic Sans MS', cursive;
+    font-optical-sizing: auto;
+    font-weight: 600 !important;
+    font-style: normal;
+  }
+  
+  #fadeInText{
+    display: none;
+  }
+  
+  @media (max-width: 600px) {
+    .typewriter_h1{
+      font-size: 60px;
+    }
+  }
+  @keyframes type {
+    from {
+        width: 0;
+    }
+  
+    to {
+        width: 100%;
+    }
+  }
+  
+  @keyframes cursor {
+    50% {
+        border-color: transparent;
+    }
+  }
