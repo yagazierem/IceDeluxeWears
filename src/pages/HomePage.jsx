@@ -178,7 +178,6 @@ const HomePage = () => {
       quantity: Number(quantity),
     });
   
-    
     if (success) {
       handleClose();
     } 

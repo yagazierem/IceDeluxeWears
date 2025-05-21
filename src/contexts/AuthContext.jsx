@@ -26,7 +26,7 @@ export const AuthProvider = ({ children }) => {
   // Check if user is already logged in on mount
   useEffect(() => {
     if (token) {
-      Endpoint.init(token); // Pass the token directly to init
+      // Endpoint.init(token); // Pass the token directly to init
     }
     setLoading(false);
   }, [token]);

@@ -25,7 +25,7 @@ const AdminLogin = () => {
     
     try {
       // Initialize endpoints
-      Endpoint.init();
+      // Endpoint.init();
       
       // Call the login API endpoint
       const response = await Endpoint.login(credentials);
