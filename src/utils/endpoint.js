@@ -3,16 +3,16 @@ import { TOKEN_KEY, getUserToken } from "./auth";
 
 const token = getUserToken();
 
-let headers = {
-  Accept: "application/json",
-  "Content-Type": "application/json",
-  Authorization: localStorage.getItem(TOKEN_KEY),
-};
-const formDataHeaders = {
-  Accept: "application/json",
-  "Content-Type": "multipart/form-data",
-  Authorization: localStorage.getItem(TOKEN_KEY),
-};
+// let headers = {
+//   Accept: "application/json",
+//   "Content-Type": "application/json",
+//   Authorization: localStorage.getItem(TOKEN_KEY),
+// };
+// const formDataHeaders = {
+//   Accept: "application/json",
+//   "Content-Type": "multipart/form-data",
+//   Authorization: localStorage.getItem(TOKEN_KEY),
+// };
 
 const Endpoint = {
   init: (tokenOverride = null) => {
@@ -26,7 +26,10 @@ const Endpoint = {
       delete axios.defaults.headers.common["Authorization"];
     }
 
-    axios.defaults.baseURL = "https://api.icedeluxewears.com";
+    // axios.defaults.baseURL = "https://api.icedeluxewears.com";
+
+    axios.defaults.baseURL =
+      process.env.REACT_APP_API_URL || "https://api.icedeluxewears.com";
 
     // Set default headers
     axios.defaults.headers.common["Accept"] = "application/json";
