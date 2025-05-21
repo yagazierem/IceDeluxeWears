@@ -178,7 +178,7 @@ const HomePage = () => {
       quantity: Number(quantity),
     });
   
-    // If it passed validation & was added, close the modal
+    
     if (success) {
       handleClose();
     } 
@@ -198,18 +198,17 @@ const HomePage = () => {
   
   const productsPerPage = 8;
 
-  // Calculate total pages
+ 
   const totalPages = Math.ceil(products.length / productsPerPage);
 
-  // Compute slice for current page
+  
   const start = (currentPage - 1) * productsPerPage;
   const paginatedProducts = products.slice(start, start + productsPerPage);
 
-  // Helper to build an array [1, 2, 3, … totalPages]
   const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
 
   const { scrollY } = useViewportScroll();
-  const y = useTransform(scrollY, [0, 300], [0, -50]); // moves up 50px over first 300px scroll
+  const y = useTransform(scrollY, [0, 300], [0, -50]); 
 
   useEffect(() => {
     setTimeout(() => {
@@ -229,7 +228,7 @@ const HomePage = () => {
             <div>
               <h1
                 className="typewriter_h1 dancing-script-600"
-                style={{ marginTop: "-10vh"}}
+                style={{ marginTop: "-10vh" }}
               >
                 Ice Luxury
               </h1>
