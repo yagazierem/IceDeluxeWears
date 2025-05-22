@@ -74,12 +74,26 @@ const Endpoint = {
     return axios.get("/products", data);
   },
   createProduct: (data) => {
-    // Override the default Content-Type for form data
     const customHeaders = {
       "Content-Type": "multipart/form-data",
     };
 
     return axios.post("/products", data, { headers: customHeaders });
+  },
+  updateProduct: (productId, data) => {
+    const customHeaders = { "Content-Type": "multipart/form-data" };
+    return axios.patch(`/products/${productId}`, data, {
+      headers: customHeaders,
+    });
+  },
+  deleteProduct: (productId) => {
+    return axios.delete(`/products/${productId}`);
+  },
+  updateCategory: (categoryId, data) => {
+    return axios.patch(`/categories/${categoryId}`, data);
+  },
+  deleteCategory: (categoryId) => {
+    return axios.delete(`/categories/${categoryId}`);
   },
 };
 

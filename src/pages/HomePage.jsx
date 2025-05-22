@@ -66,23 +66,20 @@ const HomePage = () => {
   };
 
   // Fetch products based on category
-  const fetchProducts = async (categoryId = null) => {
+  const fetchProducts = async (categoryId = 'all') => {
     try {
       setLoading(true);
       setError(null);
-      
+  
       let response;
-      
-      // For "All" category or null category, use getProducts endpoint
-      if (!categoryId || categoryId === 'all') {
+  
+      if (categoryId === 'all') {
         response = await Endpoint.getProducts();
       } else {
-        // For specific categories, use getProductsByCategory endpoint
-        response = await Endpoint.getProductsByCategory(categoryId);
+        response = await Endpoint.getProducts({ category: categoryId });
       }
-      
-      if (response?.data && response?.data.success && response?.data?.data) {
-        console.log(response.data.data, "productRes");
+  
+      if (response?.data?.success && response?.data?.data) {
         setProducts(response.data.data);
       } else {
         throw new Error('Unexpected API response format');
@@ -90,23 +87,20 @@ const HomePage = () => {
     } catch (err) {
       console.error('Error fetching products:', err);
       setError('Failed to load products. Please try again.');
-      // Keep existing products on error
     } finally {
       setLoading(false);
     }
   };
+  
 
   // Handle category tab change
   const handleCategoryChange = (categoryName) => {
     setSelectedTab(categoryName);
-    setCurrentPage(1); // Reset to first page when changing categories
-    
-    // Find the category ID for the selected category name
-    const selectedCategory = categories.find(cat => cat.name === categoryName);
-    
-    if (selectedCategory) {
-      fetchProducts(selectedCategory.id);
-    }
+  
+    const selected = categories.find(c => c.name === categoryName);
+    const categoryId = selected ? selected.id : 'all';
+  
+    fetchProducts(categoryId);
   };
 
   useEffect(() => {
