@@ -26,17 +26,17 @@ const AdminLayout = ({ children }) => {
   const navigation = [
     { name: 'Dashboard', icon: Home, path: 'dashboard' },
     { name: 'Products', icon: Package, path: 'products' },
-    { name: 'Orders', icon: ShoppingCart, path: 'orders' },
-    { name: 'Customers', icon: Users, path: 'customers' },
-    { name: 'Inventory', icon: Grid, path: 'inventory' },
-    { name: 'Content', icon: FileText, path: 'content' },
-    { name: 'Promotions', icon: Tag, path: 'promotions' },
-    { name: 'Reports', icon: BarChart2, path: 'reports' },
-    { name: 'Settings', icon: Settings, path: 'settings' },
+    { name: 'Orders', icon: ShoppingCart, path: 'order' },
+    { name: 'Customers', icon: Users, path: 'customer' },
+    { name: 'Create User', icon: Users, path: 'createUser' },
+    { name: 'Change Password', icon: Settings, path: 'changePassword' },
+    // { name: 'Promotions', icon: Tag, path: 'promotions' },
+    // { name: 'Reports', icon: BarChart2, path: 'reports' },
+    // { name: 'Settings', icon: Settings, path: 'settings' },
   ];
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-100 ">
       {/* Mobile sidebar toggle */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-30 bg-white border-b flex items-center justify-between px-4 h-16">
         <button

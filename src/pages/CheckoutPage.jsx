@@ -192,7 +192,7 @@ const CheckoutPage = () => {
               <span>Subtotal</span>
               <span>₦{cartTotal.toLocaleString()}</span>
             </div>
-            <div className="mt-4">
+            {/* <div className="mt-4">
               <input
                 type="text"
                 placeholder="Enter coupon code"
@@ -201,7 +201,7 @@ const CheckoutPage = () => {
               <button className="mt-2 w-full bg-gray-900 text-white py-2 rounded hover:bg-gray-800">
                 Apply
               </button>
-            </div>
+            </div> */}
             <div className="border-t pt-4 flex justify-between text-lg font-semibold">
               <span>Total</span>
               <span>₦{cartTotal.toLocaleString()}</span>

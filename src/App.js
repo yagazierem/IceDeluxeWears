@@ -15,6 +15,9 @@ import ProtectedAdminLayout from "./components/AdminProtectedLayout";
 import { CartProvider } from "./contexts/CartContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import Toast from "./components/toast";
+import OrderPage from "./pages/admin/orderPage";
+import AdminCreateUser from "./pages/admin/createUser";
+import ChangePassword from "./pages/admin/changePassword";
 
 function App() {
   return (
@@ -38,6 +41,10 @@ function App() {
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="products" element={<ProductManagementDashboard />} />
               <Route path="customer" element={<CustomerTable />} />
+              <Route path="order" element={<OrderPage />} />
+              <Route path="createUser" element={<AdminCreateUser />} />
+              <Route path="changePassword" element={<ChangePassword />} />
+
               {/* …other nested admin/* routes… */}
             </Route>
           </Routes>

@@ -95,6 +95,12 @@ const Endpoint = {
   deleteCategory: (categoryId) => {
     return axios.delete(`/categories/${categoryId}`);
   },
+  createUsers: (data) => {
+    return axios.post(`/admin/users`, data);
+  },
+  getUsers: (data) => {
+    return axios.get(`/admin/users`, data);
+  },
 };
 
 export default Endpoint;

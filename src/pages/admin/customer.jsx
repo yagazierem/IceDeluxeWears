@@ -439,13 +439,7 @@ const CustomerTable = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-center">
                     <div className="relative inline-block text-left" ref={actionMenuRef}>
                       <div className="flex justify-center space-x-2">
-                        <button
-                          onClick={() => handleViewDetails(customer)}
-                          className="text-blue-600 hover:text-blue-800 focus:outline-none transition duration-150 ease-in-out"
-                          title="View Details"
-                        >
-                          <FiEye className="h-5 w-5" />
-                        </button>
+                       
                         <button
                           onClick={() => handleEditCustomer(customer)}
                           className="text-green-600 hover:text-green-800 focus:outline-none transition duration-150 ease-in-out"
