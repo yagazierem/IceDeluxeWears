@@ -101,6 +101,9 @@ const Endpoint = {
   getUsers: (data) => {
     return axios.get(`/admin/users`, data);
   },
+  checkout: (data) => {
+    return axios.post(`/checkout/guest`, data);
+  },
 };
 
 export default Endpoint;

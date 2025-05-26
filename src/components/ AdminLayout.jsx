@@ -27,10 +27,10 @@ const AdminLayout = ({ children }) => {
     { name: 'Dashboard', icon: Home, path: 'dashboard' },
     { name: 'Products', icon: Package, path: 'products' },
     { name: 'Orders', icon: ShoppingCart, path: 'order' },
+    { name: 'Shipping', icon: Tag, path: 'shipping' },
     { name: 'Customers', icon: Users, path: 'customer' },
     { name: 'Create User', icon: Users, path: 'createUser' },
     { name: 'Change Password', icon: Settings, path: 'changePassword' },
-    // { name: 'Promotions', icon: Tag, path: 'promotions' },
     // { name: 'Reports', icon: BarChart2, path: 'reports' },
     // { name: 'Settings', icon: Settings, path: 'settings' },
   ];

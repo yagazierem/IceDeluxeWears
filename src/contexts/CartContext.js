@@ -9,6 +9,7 @@ export const CartProvider = ({ children }) => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState("success");
+  console.log(cartItems, "cartItems!!!");
 
   // Add item to cart
   const addToCart = (product, options = {}) => {

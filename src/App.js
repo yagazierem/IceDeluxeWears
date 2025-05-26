@@ -18,6 +18,7 @@ import Toast from "./components/toast";
 import OrderPage from "./pages/admin/orderPage";
 import AdminCreateUser from "./pages/admin/createUser";
 import ChangePassword from "./pages/admin/changePassword";
+import ShippingModule from "./pages/admin/shipping";
 
 function App() {
   return (
@@ -44,6 +45,7 @@ function App() {
               <Route path="order" element={<OrderPage />} />
               <Route path="createUser" element={<AdminCreateUser />} />
               <Route path="changePassword" element={<ChangePassword />} />
+              <Route path="shipping" element={<ShippingModule />} />
 
               {/* …other nested admin/* routes… */}
             </Route>

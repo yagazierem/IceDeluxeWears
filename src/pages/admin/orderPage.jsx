@@ -351,9 +351,9 @@ const OrderPage = () => {
               <p className="text-sm font-medium text-gray-600">Total Revenue</p>
               <p className="text-2xl font-bold text-gray-900">{formatCurrency(metrics.totalRevenue)}</p>
             </div>
-            <div className="p-3 bg-green-100 rounded-full">
+            {/* <div className="p-3 bg-green-100 rounded-full">
               <DollarSign className="h-6 w-6 text-green-600" />
-            </div>
+            </div> */}
           </div>
         </div>
 
