@@ -1,5 +1,6 @@
 import axios from "axios";
 import { TOKEN_KEY, getUserToken } from "./auth";
+import { data } from "jquery";
 
 const token = getUserToken();
 
@@ -103,6 +104,18 @@ const Endpoint = {
   },
   checkout: (data) => {
     return axios.post(`/checkout/guest`, data);
+  },
+  getOrders: (data) => {
+    return axios.get(`/admin/orders`, data);
+  },
+  getCustomers: (data) => {
+    return axios.get(`/admin/customers`, data);
+  },
+  updateCustomerStatus: (customerId, data) => {
+    return axios.patch(`/admin/customers/${customerId}/status`, data);
+  },
+  getCustomerDetail: (customerId, data) => {
+    return axios.get(`/admin/customers/${customerId}`, data);
   },
 };
 
