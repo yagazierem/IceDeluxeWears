@@ -110,6 +110,22 @@ const HomePage = () => {
     fetchProducts();
   }, []);
 
+  // Helper function to check if product is in stock
+  const isProductInStock = (product) => {
+    return product.stock && product.stock > 0;
+  };
+
+  // Helper function to get stock status display
+  const getStockStatus = (product) => {
+    if (!product.stock || product.stock === 0) {
+      return { text: 'Sold Out', className: 'text-red-600 bg-red-100' };
+    } else if (product.stock <= 5) {
+      return { text: `Only ${product.stock} left`, className: 'text-orange-600 bg-orange-100' };
+    } else {
+      return { text: 'Available', className: 'text-green-600 bg-green-100' };
+    }
+  };
+
   const validateField = (name, value) => {
     let errorMessage = '';
     
@@ -125,6 +141,8 @@ const HomePage = () => {
           errorMessage = 'Please enter a valid quantity';
         } else if (parseInt(value) < 1) {
           errorMessage = 'Quantity must be at least 1';
+        } else if (selectedProduct && parseInt(value) > selectedProduct.stock) {
+          errorMessage = `Only ${selectedProduct.stock} items available in stock`;
         }
         break;
       default:
@@ -165,11 +183,22 @@ const HomePage = () => {
   };
   
   const handleAddToCart = () => {
+    // Additional validation for stock before adding to cart
+    const qty = Number(quantity);
+    
+    if (selectedProduct && qty > selectedProduct.stock) {
+      setErrors({
+        ...errors,
+        quantity: `Only ${selectedProduct.stock} items available in stock`
+      });
+      return;
+    }
+    
     // Delegate validation & add-to-cart to context
     const success = addToCart(selectedProduct, {
       size: selectedSize,
       color: selectedColor,
-      quantity: Number(quantity),
+      quantity: qty,
     });
   
     if (success) {
@@ -318,36 +347,51 @@ const HomePage = () => {
                     ) : (
                       <>
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-                          {paginatedProducts.map(product => (
-                            <div
-                              key={product._id}
-                              className="bg-[#FCFFFF] rounded-lg shadow-none hover:shadow-2xl transition-shadow duration-300 overflow-hidden flex flex-col h-70"
-                            >
-                              <div className="bg-gray-200 flex items-center justify-center h-40">
-                                {product.images?.[0]?.url ? (
-                                  <img
-                                    src={product.images[0].url}
-                                    alt={product.name}
-                                    className="object-cover h-full w-full"
-                                  />
-                                ) : (
-                                  <div className="text-gray-500">No image</div>
-                                )}
-                              </div>
-                              <div className="p-4 flex flex-col justify-between flex-grow">
-                                <h3 className="font-normal text-small mb-1 overflow-hidden whitespace-nowrap text-ellipsis">{product.name}</h3>
-                                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mt-auto">
-                                  <span className="font-normal text-small">₦{product.price}</span>
-                                  <button
-                                    onClick={() => setSelectedProduct(product)}
-                                    className="bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 rounded text-sm w-full sm:w-auto"
-                                  >
-                                    Select Options
-                                  </button>
+                          {paginatedProducts.map(product => {
+                            const stockStatus = getStockStatus(product);
+                            const inStock = isProductInStock(product);
+                            
+                            return (
+                              <div
+                                key={product._id}
+                                className={`bg-[#FCFFFF] rounded-lg shadow-none hover:shadow-2xl transition-shadow duration-300 overflow-hidden flex flex-col h-70 ${!inStock ? 'opacity-75' : ''}`}
+                              >
+                                <div className="bg-gray-200 flex items-center justify-center h-40 relative">
+                                  {product.images?.[0]?.url ? (
+                                    <img
+                                      src={product.images[0].url}
+                                      alt={product.name}
+                                      className={`object-cover h-full w-full ${!inStock ? 'grayscale' : ''}`}
+                                    />
+                                  ) : (
+                                    <div className="text-gray-500">No image</div>
+                                  )}
+                                  
+                                  {/* Stock Status Badge */}
+                                  <div className={`absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-medium ${stockStatus.className}`}>
+                                    {stockStatus.text}
+                                  </div>
+                                </div>
+                                <div className="p-4 flex flex-col justify-between flex-grow">
+                                  <h3 className="font-normal text-small mb-1 overflow-hidden whitespace-nowrap text-ellipsis">{product.name}</h3>
+                                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mt-auto">
+                                    <span className="font-normal text-small">₦{product.price}</span>
+                                    <button
+                                      onClick={() => setSelectedProduct(product)}
+                                      disabled={!inStock}
+                                      className={`px-4 py-2 rounded text-sm w-full sm:w-auto transition-colors ${
+                                        inStock 
+                                          ? 'bg-gray-900 hover:bg-gray-800 text-white' 
+                                          : 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                                      }`}
+                                    >
+                                      {inStock ? 'Select Options' : 'Sold Out'}
+                                    </button>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                         
                         {/* Pagination */}
@@ -414,7 +458,13 @@ const HomePage = () => {
                 className="w-full h-64 object-cover rounded"
               />
               <p className="text-gray-700">{selectedProduct.description}</p>
-              <p className="text-lg font-semibold">₦{selectedProduct.price}</p>
+              <div className="flex justify-between items-center">
+                <p className="text-lg font-semibold">₦{selectedProduct.price}</p>
+                {/* Stock info in modal */}
+                <div className={`px-3 py-1 rounded-full text-sm font-medium ${getStockStatus(selectedProduct).className}`}>
+                  {getStockStatus(selectedProduct).text}
+                </div>
+              </div>
 
               {/* Product options form */}
               <div className="space-y-4">
@@ -457,13 +507,21 @@ const HomePage = () => {
                 </div>
                 
                 <div>
-                  <label className="block mb-1 font-medium">Quantity</label>
+                  <label className="block mb-1 font-medium">
+                    Quantity 
+                    {selectedProduct.stock && (
+                      <span className="text-gray-500 font-normal">
+                        (Max: {selectedProduct.stock})
+                      </span>
+                    )}
+                  </label>
                   <input
                     type="number"
                     name="quantity"
                     className={`w-full border rounded px-3 py-2 ${errors.quantity ? 'border-red-500' : 'border-gray-300'}`}
                     value={quantity}
                     min="1"
+                    max={selectedProduct.stock}
                     onChange={handleChange}
                     onBlur={handleBlur}
                   />
@@ -474,9 +532,14 @@ const HomePage = () => {
 
                 <button
                   onClick={handleAddToCart}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded font-semibold mt-2"
+                  disabled={!isProductInStock(selectedProduct)}
+                  className={`w-full py-3 rounded font-semibold mt-2 transition-colors ${
+                    isProductInStock(selectedProduct)
+                      ? 'bg-green-600 hover:bg-green-700 text-white'
+                      : 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                  }`}
                 >
-                  Add to Cart
+                  {isProductInStock(selectedProduct) ? 'Add to Cart' : 'Out of Stock'}
                 </button>
               </div>
             </div>

@@ -41,6 +41,7 @@ code {
 
 
 .typewriter_container {
+
   display: flex;
   justify-content: center;
   align-items: center;
@@ -55,13 +56,18 @@ code {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   font-size: 7rem;
-  /* font-weight: 800; */
+  font-style: normal !important;
+  font-weight: 700 !important;
   text-align: center;
   overflow: hidden;
   white-space: nowrap;
   border-right: 2px solid;
   animation: type 4.5s steps(90) 0.5s 1 normal both;
   position: relative;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: 1px;
   }
 
   .dancing-script-600 {
@@ -78,6 +84,8 @@ code {
   @media (max-width: 600px) {
     .typewriter_h1{
       font-size: 60px;
+      letter-spacing: 0.5px;
+      font-weight: 700 !important;
     }
   }
   @keyframes type {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, } from 'lucide-react';
-import { FaInstagram, FaFacebook, FaWhatsapp, FaSnapchat } from "react-icons/fa6";
+import { FaInstagram, FaFacebook, FaWhatsapp, FaTiktok  } from "react-icons/fa6";
 
 
 const Footer = () => {
@@ -52,7 +52,7 @@ const Footer = () => {
 
   <div className='flex justify-center items-center space-x-6'>
               <a href="https://www.instagram.com/ice_deluxewears/?igsh=NGwyeTA4cm83Z2Vp&utm_source=qr#" target="_blank" rel="noopener noreferrer" className="hover:opacity-75"><FaInstagram className='w-8 h-8 text-white' /></a>
-              {/* <a href="https://www.snapchat.com/add/ciellagos" target="_blank" rel="noopener noreferrer" className="hover:opacity-75"><FaSnapchat className='w-8 h-8 text-[#C69657]' /></a> */}
+              <a href="https://www.tiktok.com/@iceluxurywears?_t=ZN-8wiOvwpPxeI&_r=1" target="_blank" rel="noopener noreferrer" className="hover:opacity-75"><FaTiktok  className='w-8 h-8 text-white' /></a>
               <a href="https://www.facebook.com/ice.de.luxe.2024?mibextid=wwXIfr&mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" className="hover:opacity-75"><FaFacebook className='w-8 h-8 text-white' /></a>
               <a href="https://wa.me/2349132004888" target="_blank" rel="noopener noreferrer" className="hover:opacity-75"><FaWhatsapp className='w-8 h-8 text-white' /></a>
             </div>
