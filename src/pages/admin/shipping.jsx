@@ -1,33 +1,128 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Package, Truck, MapPin, Clock, Plus, Edit2, Trash2, Save, X } from 'lucide-react';
+import Endpoint from '../../utils/endpoint';
 
 const ShippingModule = () => {
   const [activeTab, setActiveTab] = useState('zones');
   const [editingItem, setEditingItem] = useState(null);
   const [newItem, setNewItem] = useState({});
+  const [showAddressForm, setShowAddressForm] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Sample data - in real app this would come from your backend
-  const [abujaZones, setAbujaZones] = useState([
-    { id: 1, name: 'Central Area', areas: ['Garki', 'Wuse', 'Maitama', 'Asokoro'], price: 1500, timeframe: '2-4 hours' },
-    { id: 2, name: 'Satellite Towns', areas: ['Kubwa', 'Lugbe', 'Kuje', 'Gwagwalada'], price: 2500, timeframe: '4-8 hours' },
-    { id: 3, name: 'Outskirts', areas: ['Suleja', 'Madalla', 'Zuba'], price: 3500, timeframe: '6-12 hours' }
-  ]);
+   const [shippingZones, setShippingZones] = useState([]);
+  const [pickupSettings, setPickupSettings] = useState({});
 
-  const [interStateRates, setInterStateRates] = useState([
-    { id: 1, state: 'Lagos', price: 5000, timeframe: '2-3 days', courier: 'GIG Logistics' },
-    { id: 2, state: 'Kano', price: 4500, timeframe: '2-3 days', courier: 'GIG Logistics' },
-    { id: 3, state: 'Port Harcourt', price: 5500, timeframe: '3-4 days', courier: 'DHL Nigeria' },
-    { id: 4, state: 'Ibadan', price: 4800, timeframe: '2-3 days', courier: 'Jumia Logistics' },
-    { id: 5, state: 'Kaduna', price: 3500, timeframe: '1-2 days', courier: 'Local Courier' }
-  ]);
+  const fetchPickupAddress = async () => {
+  try {
+    const response = await Endpoint.getPickupAddress();
+    if (response.data && response.data.success) {
+      const apiData = response.data.data;
+      
+      const transformedData = {
+        enabled: apiData.isEnabled,
+        address: apiData.storeAddress,
+        workingHours: apiData.workingHours,
+        instructions: apiData.pickupInstructions,
+        preparationTime: apiData.preparationTime
+      };
+      
+      setPickupSettings(transformedData);
+    }
+  } catch (err) {
+    console.error('API Error:', err);
+   
+  }
+};
 
-  const [pickupSettings, setPickupSettings] = useState({
-    enabled: true,
-    address: 'Shop 15, Banex Plaza, Wuse 2, Abuja',
-    workingHours: 'Mon-Sat: 9:00 AM - 6:00 PM',
-    instructions: 'Present order confirmation and valid ID for pickup',
-    preparationTime: '2-4 hours'
-  });
+
+
+   useEffect(() => {
+    const fetchShippingData = async () => {
+      try {
+        setIsLoading(true);
+        const response = await Endpoint.getShippingZones()
+        
+        if (response.data.success) {
+          setShippingZones(response.data.data);
+        }
+      } catch (err) {
+        setError('Failed to load shipping data');
+        console.error('API Error:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchShippingData();
+    fetchPickupAddress()
+  }, []);
+
+  // Format derived data for UI
+  const abujaZones = shippingZones.filter(zone => zone.type === 'abuja').map(zone => ({
+    id: zone._id,
+    name: zone.name,
+    areas: zone.states || [], // Use states field for areas
+    price: zone.price,
+    timeframe: zone.estimatedDeliveryTime,
+    preparationTime: zone.preparationTime,
+    type: 'abuja'
+  }));
+
+  // const interStateRates = shippingZones.filter(zone => zone.type === 'interstate').map(zone => ({
+  //   id: zone._id,
+  //   state: zone.states?.[0] || '', 
+  //   price: zone.price,
+  //   timeframe: zone.estimatedDeliveryTime,
+  //   courier: zone.courierPartner,
+  //   type: 'interstate'
+  // }));
+
+  const interStateRates = [
+  ...shippingZones
+    .filter(zone => zone.type === 'interstate')
+    .map(zone => ({
+      id: zone._id,
+      state: zone.states?.[0] || '',
+      price: zone.price,
+      timeframe: zone.estimatedDeliveryTime,
+      courier: zone.courierPartner,
+      type: 'interstate'
+    })),
+  
+  // Add the new unsaved item if it exists
+  ...(editingItem?.type === 'interstate' && !editingItem.id ? [editingItem] : [])
+];
+
+  
+ const handleSavePickup = async () => {
+  try {
+    // Transform state data to match API payload structure
+    const payload = {
+      isEnabled: pickupSettings.enabled,
+      storeAddress: pickupSettings.address,
+      workingHours: pickupSettings.workingHours,
+      preparationTime: pickupSettings.preparationTime,
+      pickupInstructions: pickupSettings.instructions
+    };
+    
+    const response = await Endpoint.updatePickupAddress(payload);
+    
+    if (response.data && response.data.success) {
+      setShowAddressForm(false);
+    fetchPickupAddress()
+
+      // Show success message - you can implement toast notification here
+      console.log('Pickup address updated successfully');
+    } else {
+      // Handle API error response
+      console.error('Failed to update pickup address');
+    }
+  } catch (err) {
+    console.error('API Error:', err);
+    // Handle error - you can show error toast here
+  }
+};
 
   const [generalSettings, setGeneralSettings] = useState({
     freeDeliveryThreshold: 25000,
@@ -41,58 +136,100 @@ const ShippingModule = () => {
     setNewItem({ ...item });
   };
 
-  const handleSave = () => {
-    if (editingItem.type === 'abuja') {
-      setAbujaZones(prev => prev.map(zone => 
-        zone.id === editingItem.id ? { ...newItem } : zone
-      ));
-    } else if (editingItem.type === 'interstate') {
-      setInterStateRates(prev => prev.map(rate => 
-        rate.id === editingItem.id ? { ...newItem } : rate
-      ));
+  // Unified save function for both zone types
+  const handleSave = async () => {
+    if (!editingItem) return;
+    
+    try {
+      setIsLoading(true);
+      const isAbuja = editingItem.type === 'abuja';
+      const isNew = editingItem.id === null;
+      console.log(isNew, "isNew")
+
+      // Prepare data for API
+      const data = {
+        name: newItem.name,
+        states: isAbuja ? ['Abuja'] : [newItem.state],
+        price: newItem.price,
+        estimatedDeliveryTime: newItem.timeframe,
+        type: editingItem.type,
+        courierPartner: isAbuja ? '' : newItem.courier,
+        preparationTime: isAbuja ? newItem.preparationTime : undefined
+      };
+      console.log(data, "dataa")
+
+
+      let response;
+      if (isNew) {
+        // Create new zone
+        response = await Endpoint.createShippingZone(data)
+      } else {
+        // Update existing zone
+        response = await Endpoint.updateShippingZone(editingItem.id,data)
+      }
+
+      if (response.data.success) {
+        // Refetch data after update
+        const refreshResponse = await Endpoint.getShippingZones()
+        setShippingZones(refreshResponse.data.data);
+        setEditingItem(null);
+        setNewItem({});
+      }
+    } catch (err) {
+      setError(`Failed to ${editingItem.id ? 'update' : 'create'} zone`);
+      console.error('Save Error:', err);
+    } finally {
+      setIsLoading(false);
     }
-    setEditingItem(null);
-    setNewItem({});
   };
 
-  const handleCancel = () => {
-    setEditingItem(null);
-    setNewItem({});
-  };
 
-  const handleDelete = (id, type) => {
-    if (type === 'abuja') {
-      setAbujaZones(prev => prev.filter(zone => zone.id !== id));
-    } else if (type === 'interstate') {
-      setInterStateRates(prev => prev.filter(rate => rate.id !== id));
+  const handleDelete = async (id, type) => {
+    try {
+      setIsLoading(true);
+     await Endpoint.deleteShippingZone(id)
+      
+      // Refetch data after delete
+      const response = await Endpoint.getShippingZones()
+      setShippingZones(response.data.data);
+    } catch (err) {
+      setError('Failed to delete zone');
+      console.error('Delete Error:', err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleAddNew = (type) => {
-    const newId = Date.now(); // Simple ID generation
-    if (type === 'abuja') {
-      const newZone = {
-        id: newId,
-        name: '',
-        areas: [],
-        price: 0,
-        timeframe: ''
-      };
-      setAbujaZones(prev => [...prev, newZone]);
-      setEditingItem({ ...newZone, type: 'abuja' });
-      setNewItem({ ...newZone });
-    } else if (type === 'interstate') {
-      const newRate = {
-        id: newId,
-        state: '',
-        price: 0,
-        timeframe: '',
-        courier: 'GIG Logistics'
-      };
-      setInterStateRates(prev => [...prev, newRate]);
-      setEditingItem({ ...newRate, type: 'interstate' });
-      setNewItem({ ...newRate });
-    }
+  if (type === 'abuja') {
+    const newZone = {
+      id: null, // Use null instead of undefined
+      name: '',
+      areas: [],
+      price: 0,
+      timeframe: '',
+      preparationTime: '',
+      type: 'abuja'
+    };
+    setEditingItem({ ...newZone, type: 'abuja' });
+    setNewItem({ ...newZone });
+  } else if (type === 'interstate') {
+    const newRate = {
+      id: null, // Use null instead of undefined
+      state: '',
+      price: 0,
+      timeframe: '',
+      courier: 'GIG Logistics',
+      type: 'interstate'
+    };
+    setEditingItem({ ...newRate, type: 'interstate' });
+    setNewItem({ ...newRate });
+  }
+};
+
+  const handleCancel = () => {
+    setEditingItem(null);
+    setNewItem({});
   };
 
   const formatCurrency = (amount) => {
@@ -102,6 +239,18 @@ const ShippingModule = () => {
       minimumFractionDigits: 0
     }).format(amount);
   };
+
+   // Render loading state
+  if (isLoading && shippingZones.length === 0) {
+    return (
+      <div className="max-w-6xl mx-auto p-6 bg-gray-50 min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="mt-4 text-gray-700">Loading shipping data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-6xl mx-auto p-6 bg-gray-50 min-h-screen">
@@ -121,7 +270,6 @@ const ShippingModule = () => {
               { id: 'zones', label: 'Abuja Zones', icon: MapPin },
               { id: 'interstate', label: 'Inter-State', icon: Truck },
               { id: 'pickup', label: 'Store Pickup', icon: Package },
-              { id: 'settings', label: 'Settings', icon: Clock }
             ].map(tab => (
               <button
                 key={tab.id}
@@ -168,13 +316,13 @@ const ShippingModule = () => {
                       className="w-full p-3 border border-gray-300 rounded-lg"
                       placeholder="Zone name (e.g., Central Area)"
                     />
-                    <input
+                    {/* <input
                       type="text"
                       value={newItem.areas?.join(', ') || ''}
                       onChange={(e) => setNewItem({...newItem, areas: e.target.value.split(', ').filter(area => area.trim())})}
                       className="w-full p-3 border border-gray-300 rounded-lg"
                       placeholder="Areas (comma separated, e.g., Garki, Wuse, Maitama)"
-                    />
+                    /> */}
                     <div className="grid md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Price (₦)</label>
@@ -192,6 +340,18 @@ const ShippingModule = () => {
                           type="text"
                           value={newItem.timeframe || ''}
                           onChange={(e) => setNewItem({...newItem, timeframe: e.target.value})}
+                          className="w-full p-3 border border-gray-300 rounded-lg"
+                          placeholder="e.g., 2-4 hours"
+                        />
+                      </div>
+                      <div className="mt-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Preparation Time
+                        </label>
+                        <input
+                          type="text"
+                          value={newItem.preparationTime || ''}
+                          onChange={(e) => setNewItem({...newItem, preparationTime: e.target.value})}
                           className="w-full p-3 border border-gray-300 rounded-lg"
                           placeholder="e.g., 2-4 hours"
                         />
@@ -215,9 +375,9 @@ const ShippingModule = () => {
                     <div className="flex justify-between items-start">
                       <div>
                         <h3 className="font-semibold text-lg">{zone.name}</h3>
-                        <p className="text-gray-600 mb-2">
+                        {/* <p className="text-gray-600 mb-2">
                           Areas: {zone.areas.join(', ')}
-                        </p>
+                        </p> */}
                         <div className="flex items-center gap-4 text-sm">
                           <span className="text-green-600 font-semibold">
                             {formatCurrency(zone.price)}
@@ -383,7 +543,24 @@ const ShippingModule = () => {
                       </span>
                     </label>
                   </div>
-
+                  <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h4 className="font-medium">Current Pickup Address</h4>
+                        <p className="text-gray-700 mt-1">{pickupSettings.address}</p>
+                      </div>
+                      <button 
+                        onClick={() => setShowAddressForm(true)}
+                        className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 mt-3"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                        Change Address
+                      </button>
+                       
+                    </div>
+                    {showAddressForm && (
+                <div className="mt-6 border-t pt-6">
+                  <h4 className="font-medium mb-4">Update Pickup Address</h4>
                   <div className="grid md:grid-cols-2 gap-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -433,86 +610,33 @@ const ShippingModule = () => {
                       />
                     </div>
                   </div>
-
-                  <button className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
-                    Save Pickup Settings
-                  </button>
+                  
+                  <div className="flex gap-3 mt-4">
+                    <button 
+                      onClick={() => setShowAddressForm(false)}
+                      className="bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-700"
+                    >
+                      <X className="w-4 h-4" /> Cancel
+                    </button>
+                    <button 
+                      onClick={handleSavePickup}
+                      className="bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-green-700"
+                    >
+                      <Save className="w-4 h-4" /> Save Address
+                    </button>
+                  </div>
                 </div>
-              </div>
-            </div>
-          )}
-
-          {/* General Settings Tab */}
-          {activeTab === 'settings' && (
-            <div>
-              <h2 className="text-lg font-semibold mb-6">General Shipping Settings</h2>
-              
-              <div className="space-y-6">
-                <div className="border border-gray-200 rounded-lg p-6">
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Free Delivery Threshold (₦)
-                      </label>
-                      <input
-                        type="number"
-                        value={generalSettings.freeDeliveryThreshold}
-                        onChange={(e) => setGeneralSettings({...generalSettings, freeDeliveryThreshold: parseInt(e.target.value)})}
-                        className="w-full p-3 border border-gray-300 rounded-lg"
-                      />
-                      <p className="text-sm text-gray-500 mt-1">
-                        Orders above this amount get free delivery within Abuja
-                      </p>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Default Courier Partner
-                      </label>
-                      <select
-                        value={generalSettings.defaultCourier}
-                        onChange={(e) => setGeneralSettings({...generalSettings, defaultCourier: e.target.value})}
-                        className="w-full p-3 border border-gray-300 rounded-lg"
-                      >
-                        <option>GIG Logistics</option>
-                        <option>DHL Nigeria</option>
-                        <option>Jumia Logistics</option>
-                        <option>Local Courier</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Maximum Delivery Days
-                      </label>
-                      <input
-                        type="number"
-                        value={generalSettings.maxDeliveryDays}
-                        onChange={(e) => setGeneralSettings({...generalSettings, maxDeliveryDays: parseInt(e.target.value)})}
-                        className="w-full p-3 border border-gray-300 rounded-lg"
-                      />
-                    </div>
-
-                    <div className="flex items-center">
-                      <label className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={generalSettings.codEnabled}
-                          onChange={(e) => setGeneralSettings({...generalSettings, codEnabled: e.target.checked})}
-                          className="mr-2"
-                        />
-                        <span>Enable Cash on Delivery (COD)</span>
-                      </label>
-                    </div>
+                        )}
                   </div>
 
-                  <button className="mt-6 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
-                    Save General Settings
-                  </button>
+                 
+                  
                 </div>
               </div>
             </div>
           )}
+
+          
         </div>
       </div>
     </div>

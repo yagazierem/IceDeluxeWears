@@ -117,6 +117,27 @@ const Endpoint = {
   getCustomerDetail: (customerId, data) => {
     return axios.get(`/admin/customers/${customerId}`, data);
   },
+  verifyPayment: (reference, data) => {
+    return axios.get(`/verify-payment/paystack/${reference}`, data);
+  },
+  getShippingZones: (data) => {
+    return axios.get(`/shipping/admin/zones`, data);
+  },
+  getPickupAddress: (data) => {
+    return axios.get(`/shipping/pickup`, data);
+  },
+  createShippingZone: (data) => {
+    return axios.post(`/shipping/admin/zones`, data);
+  },
+  updateShippingZone: (id, data) => {
+    return axios.put(`/shipping/admin/zones/${id}`, data);
+  },
+  deleteShippingZone: (id) => {
+    return axios.delete(`/shipping/admin/zones/${id}`);
+  },
+  updatePickupAddress: (data) => {
+    return axios.put(`/shipping/admin/pickup`, data);
+  },
 };
 
 export default Endpoint;

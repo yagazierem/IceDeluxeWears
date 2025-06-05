@@ -19,6 +19,7 @@ import OrderPage from "./pages/admin/orderPage";
 import AdminCreateUser from "./pages/admin/createUser";
 import ChangePassword from "./pages/admin/changePassword";
 import ShippingModule from "./pages/admin/shipping";
+import PaymentVerify from "./pages/PaymentVerify";
 
 function App() {
   return (
@@ -27,6 +28,8 @@ function App() {
         <AuthProvider>
           <Routes>
             {/* Customer routes wrapped in Layout */}
+            <Route path="paymentVerify" element={<PaymentVerify />} />
+
             <Route element={<Layout />}>
               <Route index element={<HomePage />} />
               {/* <Route path="products" element={<ProductsPage />} /> */}
