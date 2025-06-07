@@ -3,17 +3,16 @@ import { CheckCircle, XCircle, Loader2, AlertCircle } from 'lucide-react';
 import Endpoint from '../utils/endpoint';
 import { useParams, useNavigate } from 'react-router-dom';
 
-
 export default function PaymentVerify() {
-     const [paymentStatus, setPaymentStatus] = useState('verifying'); 
-   const [paymentDetails, setPaymentDetails] = useState(null);
+  const [paymentStatus, setPaymentStatus] = useState('verifying'); 
+  const [paymentDetails, setPaymentDetails] = useState(null);
   const [reference, setReference] = useState('');
-   const [error, setError] = useState('');
-     const { transactionId } = useParams();
-       const navigate = useNavigate();
+  const [error, setError] = useState('');
+  const { transactionId } = useParams();
+  const navigate = useNavigate();
 
   useEffect(() => {
-   const verifyPayment = async () => {
+    const verifyPayment = async () => {
       try {
         const urlParams = new URLSearchParams(window.location.search);
         const refFromUrl = urlParams.get('reference') || urlParams.get('trxref');
@@ -26,12 +25,13 @@ export default function PaymentVerify() {
         const response = await Endpoint.verifyPayment(paymentReference);
         console.log('Verification Response:', response);
 
-        if (response?.success && response?.data?.data?.paymentStatus === 'completed') {
+        // Fixed: Check response.data.success instead of response.success
+        if (response?.data?.success && response?.data?.data?.paymentStatus === 'completed') {
           setPaymentStatus('success');
           setPaymentDetails(response?.data?.data?.order);
         } else {
           setPaymentStatus('failed');
-          setError(response?.message || 'Payment not completed');
+          setError(response?.data?.message || 'Payment not completed');
         }
       } catch (error) {
         console.error('Verification error:', error);
@@ -40,17 +40,11 @@ export default function PaymentVerify() {
         setTimeout(() => navigate('/'), 5000);
       }
     };
-     verifyPayment();
-
+    verifyPayment();
   }, [transactionId, navigate]);
 
- 
-
- 
-
-  
   return (
-     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6">
       <div className="max-w-2xl mx-auto">
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
           {/* Header */}
@@ -96,10 +90,10 @@ export default function PaymentVerify() {
                   <h3 className="text-lg font-medium text-gray-900 mb-4">Order Summary</h3>
                   
                   <div className="space-y-4">
-                    {paymentDetails?.items.map((item, index) => (
+                    {paymentDetails?.items?.map((item, index) => (
                       <div key={index} className="flex justify-between">
                         <div>
-                          <span className="font-medium">{item.name}</span>
+                          <span className="font-medium">{item.name || `Item ${index + 1}`}</span>
                           <span className="text-gray-600 ml-2">x {item.quantity}</span>
                         </div>
                         <div className="font-medium">₦{(item.price * item.quantity).toLocaleString()}</div>
@@ -118,42 +112,22 @@ export default function PaymentVerify() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm text-gray-500">Order Number</p>
-                      <p className="font-medium">{paymentDetails?.order?.orderNumber}</p>
+                      <p className="font-medium">{paymentDetails?.orderNumber}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Reference Number</p>
-                      <p className="font-medium">{paymentDetails?.order?.paymentDetails?.reference}</p>
+                      <p className="font-medium">{paymentDetails?.paymentDetails?.reference}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Date</p>
-                      <p className="font-medium">{new Date(paymentDetails?.order?.createdAt).toLocaleString()}</p>
+                      <p className="font-medium">{new Date(paymentDetails?.createdAt).toLocaleString()}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Payment Method</p>
-                      <p className="font-medium">{paymentDetails?.order?.paymentMethod}</p>
+                      <p className="font-medium">{paymentDetails?.paymentMethod}</p>
                     </div>
                   </div>
                 </div>
-                
-                {/* <div className="border-t border-gray-200 pt-6">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Customer Information</h3>
-                  <div className="flex items-center space-x-4">
-                    <div className="bg-gray-200 border-2 border-dashed rounded-xl w-16 h-16" />
-                    <div>
-                      <p className="font-medium">{paymentDetails.customer.name}</p>
-                      <p className="text-gray-600">{paymentDetails.customer.email}</p>
-                    </div>
-                  </div>
-                </div> */}
-                
-                {/* <div className="flex justify-between pt-8">
-                  <button className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors">
-                    View Order History
-                  </button>
-                  <button className="px-6 py-3 bg-indigo-600 rounded-lg text-white font-medium hover:bg-indigo-700 transition-colors">
-                    Continue Shopping
-                  </button>
-                </div> */}
               </div>
             )}
             
@@ -166,14 +140,6 @@ export default function PaymentVerify() {
                 </div>
                 <h2 className="text-xl font-semibold text-gray-800">Payment Verification Failed</h2>
                 <p className="text-red-600 mt-4 max-w-md mx-auto">{error}</p>
-                {/* <div className="mt-8 space-x-4">
-                  <button className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors" >
-                    Try Again
-                  </button>
-                  <button className="px-6 py-3 bg-indigo-600 rounded-lg text-white font-medium hover:bg-indigo-700 transition-colors">
-                    Contact Support
-                  </button>
-                </div> */}
                 <button 
                   onClick={() => navigate('/')}
                   className="mt-6 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
@@ -187,8 +153,7 @@ export default function PaymentVerify() {
           {/* Footer */}
           <div className="bg-gray-50 px-6 py-4 text-center">
             <p className="text-sm text-gray-600">
-              Need help? Contact our support team at <span className="text-indigo-600">info@icedeluxewears.com
-</span>
+              Need help? Contact our support team at <span className="text-indigo-600">info@icedeluxewears.com</span>
             </p>
           </div>
         </div>
@@ -198,5 +163,5 @@ export default function PaymentVerify() {
         </div>
       </div>
     </div>
-  )
+  );
 }
