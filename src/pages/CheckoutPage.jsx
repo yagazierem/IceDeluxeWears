@@ -29,22 +29,63 @@ const CheckoutPage = () => {
   const [isPaymentLoading, setIsPaymentLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [apiError, setApiError] = useState('');
+  const [states, setStates] = useState([]);
+  const [shippingZones, setShippingZones] = useState([]);
+  const [isLoadingStates, setIsLoadingStates] = useState(false);
+  const [isLoadingZones, setIsLoadingZones] = useState(false);
+
+   useEffect(() => {
+    const fetchStates = async () => {
+      setIsLoadingStates(true);
+      try {
+        const response = await Endpoint.getShippingStates();
+        console.log(response, "responsestate")
+        setStates(response.data);
+      } catch (error) {
+        console.error('Error fetching states:', error);
+        setApiError('Failed to load shipping states. Please refresh the page.');
+      } finally {
+        setIsLoadingStates(false);
+      }
+    };
+
+    fetchStates();
+  }, []);
+
+  useEffect(() => {
+  const fetchShippingZones = async () => {
+    if (shippingDetails.state) {
+      setIsLoadingZones(true);
+      setShippingMethod(''); // Reset selection when state changes
+      try {
+        const response = await Endpoint.getShippingZonesByState(shippingDetails.state);
+        console.log(response, "shippingzoness")
+        setShippingZones(response.data?.data || []);
+      } catch (error) {
+        console.error('Error fetching shipping zones:', error);
+        setApiError('Failed to load shipping options for this state.');
+        setShippingZones([]);
+      } finally {
+        setIsLoadingZones(false);
+      }
+    }
+  };
+
+  fetchShippingZones();
+}, [shippingDetails.state]);
+
 
   // Hero animation
   const { scrollY } = useViewportScroll();
   const y = useTransform(scrollY, [0, 300], [0, -50]);
 
   // Shipping fee calculation
-  const getShippingFee = () => {
-    switch (shippingMethod) {
-      case 'standard':
-        return 1000;
-      case 'express':
-        return 2500;
-      default:
-        return 0;
-    }
-  };
+ const getShippingFee = () => {
+  if (!shippingMethod || !shippingZones.length) return 0;
+  
+  const selectedZone = shippingZones.find(zone => zone._id === shippingMethod);
+  return selectedZone?.price || 0;
+};
 
   const shippingFee = getShippingFee();
   const finalTotal = cartTotal + shippingFee;
@@ -132,17 +173,17 @@ const CheckoutPage = () => {
   };
 
   // Check for payment callback on component mount
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const reference = urlParams.get('reference');
-    const status = urlParams.get('status');
+  // useEffect(() => {
+  //   const urlParams = new URLSearchParams(window.location.search);
+  //   const reference = urlParams.get('reference');
+  //   const status = urlParams.get('status');
     
-    if (reference && status === 'success') {
-      handlePaymentVerification(reference);
-    } else if (reference && status === 'cancelled') {
-      setApiError('Payment was cancelled. Please try again.');
-    }
-  }, []);
+  //   if (reference && status === 'success') {
+  //     handlePaymentVerification(reference);
+  //   } else if (reference && status === 'cancelled') {
+  //     setApiError('Payment was cancelled. Please try again.');
+  //   }
+  // }, []);
 
   const handlePlaceOrder = async () => {
     if (!validateForm()) {
@@ -358,11 +399,14 @@ const CheckoutPage = () => {
                 value={shippingDetails.state}
                 onChange={handleChange}
                 className={`border rounded px-3 py-2 w-full ${errors.state ? 'border-red-500' : ''}`}
+                disabled={isLoadingStates}
               >
                 <option value="">State *</option>
-                <option value="FCT">FCT</option>
-                <option value="Lagos">Lagos</option>
-                <option value="Abuja">Abuja</option>
+                {states.map((state, index) => (
+                  <option key={index} value={state}>
+                    {state}
+                  </option>
+                ))}
               </select>
               {errors.state && (
                 <p className="text-red-500 text-sm mt-1">{errors.state}</p>
@@ -404,19 +448,38 @@ const CheckoutPage = () => {
           />
 
           <h2 className="text-xl font-semibold mt-8 mb-4">Shipping Method</h2>
-          <div>
-            <select
-              name="shippingMethod" 
-              value={shippingMethod}
-              onChange={handleShippingMethodChange}
-              className={`border rounded px-3 py-2 w-full ${errors.shippingMethod ? 'border-red-500' : ''}`}
-            >
-              <option value="">Choose a shipping method *</option>
-              <option value="standard">Standard Shipping - ₦1,000</option>
-              <option value="express">Express Shipping - ₦2,500</option>
-            </select>
-            {errors.shippingMethod && (
-              <p className="text-red-500 text-sm mt-1">{errors.shippingMethod}</p>
+         <div className="space-y-4">
+            {isLoadingZones ? (
+              <div>Loading shipping options...</div>
+            ) : shippingZones.length > 0 ? (
+              shippingZones.map(zone => (
+                <label key={zone._id} className="flex items-start p-4 border rounded-lg cursor-pointer hover:bg-gray-50">
+                  <input
+                    type="radio"
+                    name="shippingMethod"
+                    value={zone._id}
+                    checked={shippingMethod === zone._id}
+                    onChange={handleShippingMethodChange}
+                    className="mt-1 mr-3"
+                  />
+                  <div className="flex-1">
+                    <div className="flex justify-between">
+                      <h3 className="font-medium">{zone.name}</h3>
+                      <span className="font-semibold">₦{zone.price.toLocaleString()}</span>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-1">
+                      <span className="font-medium">Covers:</span> {zone.areas.join(', ')}
+                    </p>
+                    {zone.estimatedDeliveryTime && (
+                      <p className="text-sm text-gray-600 mt-1">
+                        <span className="font-medium">Estimated delivery:</span> {zone.estimatedDeliveryTime}
+                      </p>
+                    )}
+                  </div>
+                </label>
+              ))
+            ) : (
+              <div className="text-gray-500">No shipping options available for this state</div>
             )}
           </div>
         </div>
@@ -449,7 +512,9 @@ const CheckoutPage = () => {
             <div className="flex justify-between">
               <span>Shipping Fee</span>
               <span>
-                {shippingFee > 0 ? `₦${shippingFee.toLocaleString()}` : 'Select shipping method'}
+                {shippingMethod 
+                  ? `₦${shippingFee.toLocaleString()}` 
+                  : 'Select shipping method'}
               </span>
             </div>
             

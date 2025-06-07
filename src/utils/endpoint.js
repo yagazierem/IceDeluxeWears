@@ -138,6 +138,12 @@ const Endpoint = {
   updatePickupAddress: (data) => {
     return axios.put(`/shipping/admin/pickup`, data);
   },
+  getShippingStates: (data) => {
+    return axios.get(`/shipping/states`, data);
+  },
+  getShippingZonesByState: (state) => {
+  return axios.get(`/shipping/zones?state=${state}`);
+},
 };
 
 export default Endpoint;

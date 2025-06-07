@@ -42,6 +42,7 @@ const ShippingModule = () => {
       try {
         setIsLoading(true);
         const response = await Endpoint.getShippingZones()
+        console.log(response, "resss")
         
         if (response.data.success) {
           setShippingZones(response.data.data);
@@ -83,7 +84,7 @@ const ShippingModule = () => {
     .filter(zone => zone.type === 'interstate')
     .map(zone => ({
       id: zone._id,
-      state: zone.states?.[0] || '',
+      state: zone.name,
       price: zone.price,
       timeframe: zone.estimatedDeliveryTime,
       courier: zone.courierPartner,
@@ -138,51 +139,47 @@ const ShippingModule = () => {
 
   // Unified save function for both zone types
   const handleSave = async () => {
-    if (!editingItem) return;
-    
-    try {
-      setIsLoading(true);
-      const isAbuja = editingItem.type === 'abuja';
-      const isNew = editingItem.id === null;
-      console.log(isNew, "isNew")
+  if (!editingItem) return;
+  
+  try {
+    setIsLoading(true);
+    const isAbuja = editingItem.type === 'abuja';
+    const isNew = editingItem.id === null;
 
-      // Prepare data for API
-      const data = {
-        name: newItem.name,
-        states: isAbuja ? ['Abuja'] : [newItem.state],
-        price: newItem.price,
-        estimatedDeliveryTime: newItem.timeframe,
-        type: editingItem.type,
-        courierPartner: isAbuja ? '' : newItem.courier,
-        preparationTime: isAbuja ? newItem.preparationTime : undefined
-      };
-      console.log(data, "dataa")
+    // Prepare data for API
+    const data = {
+      name: isAbuja ? newItem.name : newItem.state, // Use state name for interstate zones
+      states: isAbuja ? ['Abuja'] : [newItem.state],
+      price: newItem.price,
+      estimatedDeliveryTime: newItem.timeframe,
+      type: editingItem.type,
+      courierPartner: isAbuja ? '' : newItem.courier,
+      preparationTime: isAbuja ? newItem.preparationTime : undefined
+    };
 
-
-      let response;
-      if (isNew) {
-        // Create new zone
-        response = await Endpoint.createShippingZone(data)
-      } else {
-        // Update existing zone
-        response = await Endpoint.updateShippingZone(editingItem.id,data)
-      }
-
-      if (response.data.success) {
-        // Refetch data after update
-        const refreshResponse = await Endpoint.getShippingZones()
-        setShippingZones(refreshResponse.data.data);
-        setEditingItem(null);
-        setNewItem({});
-      }
-    } catch (err) {
-      setError(`Failed to ${editingItem.id ? 'update' : 'create'} zone`);
-      console.error('Save Error:', err);
-    } finally {
-      setIsLoading(false);
+    let response;
+    if (isNew) {
+      // Create new zone
+      response = await Endpoint.createShippingZone(data);
+    } else {
+      // Update existing zone
+      response = await Endpoint.updateShippingZone(editingItem.id, data);
     }
-  };
 
+    if (response.data.success) {
+      // Refetch data after update
+      const refreshResponse = await Endpoint.getShippingZones();
+      setShippingZones(refreshResponse.data.data);
+      setEditingItem(null);
+      setNewItem({});
+    }
+  } catch (err) {
+    setError(`Failed to ${editingItem.id ? 'update' : 'create'} zone`);
+    console.error('Save Error:', err.response?.data || err.message);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const handleDelete = async (id, type) => {
     try {
