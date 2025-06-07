@@ -1,197 +1,154 @@
-
 import React, { useState, useEffect } from 'react';
-import { CheckCircle, XCircle, Loader2, AlertCircle } from 'lucide-react';
+import { useParams, useNavigate } from 'react-router-dom';
 import Endpoint from '../utils/endpoint';
-import { useParams } from 'react-router-dom';
-
+import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 
 export default function PaymentVerify() {
-     const [paymentStatus, setPaymentStatus] = useState('verifying'); 
-   const [paymentDetails, setPaymentDetails] = useState(null);
-  const [reference, setReference] = useState('');
-   const [error, setError] = useState('');
-     const { transactionId } = useParams();
+  const [paymentStatus, setPaymentStatus] = useState('verifying');
+  const [orderDetails, setOrderDetails] = useState(null);
+  const [error, setError] = useState('');
+  const { transactionId } = useParams();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const refFromUrl = urlParams.get('reference') 
-    console.log(refFromUrl, "refFromUrl")
+    const verifyPayment = async () => {
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const refFromUrl = urlParams.get('reference') || urlParams.get('trxref');
+        const paymentReference = refFromUrl || transactionId;
 
-       const paymentReference = refFromUrl || transactionId;
+        if (!paymentReference) {
+          throw new Error('No payment reference found');
+        }
 
-    if (paymentReference) {
-      setReference(paymentReference);
-      verifyPayment(paymentReference);
-    } else {
-      setPaymentStatus('error');
-      setError('No payment reference found');
-    }
-  }, [transactionId]);
+        const response = await Endpoint.verifyPayment(paymentReference);
+        console.log('Verification Response:', response);
 
- const verifyPayment = async (paymentReference) => {
-    try {
-      const response = await Endpoint.verifyPayment(paymentReference);
-      console.log(response, "RESPONSEEE====");
-      
-      if (response.status === 'success') {
-        setPaymentStatus('success');
-        setPaymentDetails(response.data);
-      } else {
-        setPaymentStatus('failed');
-        setError(response.message || 'Payment verification failed');
+        if (response.success && response.data.paymentStatus === 'completed') {
+          setPaymentStatus('success');
+          setOrderDetails(response.data.order);
+        } else {
+          setPaymentStatus('failed');
+          setError(response.message || 'Payment not completed');
+        }
+      } catch (error) {
+        console.error('Verification error:', error);
+        setPaymentStatus('error');
+        setError(error.message || 'Error verifying payment');
+        setTimeout(() => navigate('/'), 5000);
       }
-    } catch (error) {
-      console.error('Payment verification error:', error);
-      setPaymentStatus('error');
-      setError(error.message || 'Error verifying payment');
-    }
-  };
+    };
 
- 
+    verifyPayment();
+  }, [transactionId, navigate]);
 
-  
-  return (
-     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6">
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+  if (paymentStatus === 'verifying') {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 mx-auto animate-spin text-indigo-600" />
+          <p className="mt-4 text-lg">Verifying your payment...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (paymentStatus === 'success' && orderDetails) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6">
+        <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-md overflow-hidden">
           {/* Header */}
-          <div className="bg-gradient-to-r from-indigo-600 to-purple-700 px-6 py-8 text-center">
-            <h1 className="text-3xl font-bold text-white">Payment Confirmation</h1>
-            <p className="text-indigo-200 mt-2">
-              {paymentStatus === 'verifying' && 'Verifying your payment...'}
-              {paymentStatus === 'success' && 'Your payment was successful!'}
-              {paymentStatus === 'failed' && 'Payment verification failed'}
-              {paymentStatus === 'error' && 'Error verifying payment'}
+          <div className="bg-green-500 px-6 py-8 text-center">
+            <CheckCircle className="w-16 h-16 mx-auto text-white" />
+            <h1 className="text-2xl font-bold text-white mt-4">Payment Successful!</h1>
+            <p className="text-green-100 mt-2">
+              Thank you for your order #{orderDetails.orderNumber}
             </p>
           </div>
-          
-          {/* Body */}
+
+          {/* Order Summary */}
           <div className="px-6 py-8">
-            {paymentStatus === 'verifying' && (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 mx-auto mb-6">
-                  <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-indigo-600"></div>
-                </div>
-                <p className="text-gray-600">We're verifying your payment details. This may take a moment.</p>
-              </div>
-            )}
+            <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
             
-            {paymentStatus === 'success' && paymentDetails && (
-              <div className="space-y-6">
-                <div className="flex justify-center">
-                  <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
-                    <svg className="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
+            <div className="space-y-4">
+              {orderDetails.items.map((item, index) => (
+                <div key={index} className="flex justify-between border-b pb-2">
+                  <div>
+                    <span className="font-medium">Item {index + 1}</span>
+                    <span className="text-gray-600 ml-2">x {item.quantity}</span>
                   </div>
+                  <div>₦{item.price.toLocaleString()}</div>
                 </div>
-                
-                <div className="text-center">
-                  <h2 className="text-xl font-semibold text-gray-800">Thank you for your order!</h2>
-                  <p className="text-gray-600 mt-2">
-                    Your payment of <span className="font-bold">₦{(paymentDetails.amount / 100).toLocaleString()}</span> was successful.
-                  </p>
-                </div>
-                
-                <div className="border-t border-gray-200 pt-6">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Order Summary</h3>
-                  
-                  <div className="space-y-4">
-                    {paymentDetails.items.map((item, index) => (
-                      <div key={index} className="flex justify-between">
-                        <div>
-                          <span className="font-medium">{item.name}</span>
-                          <span className="text-gray-600 ml-2">x {item.quantity}</span>
-                        </div>
-                        <div className="font-medium">₦{(item.price * item.quantity).toLocaleString()}</div>
-                      </div>
-                    ))}
-                    
-                    <div className="flex justify-between border-t border-gray-200 pt-4">
-                      <div className="font-bold">Total</div>
-                      <div className="font-bold">₦{(paymentDetails.amount / 100).toLocaleString()}</div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="border-t border-gray-200 pt-6">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Payment Details</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-500">Reference Number</p>
-                      <p className="font-medium">{paymentDetails.reference}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Transaction ID</p>
-                      <p className="font-medium">{paymentDetails.transactionId}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Date</p>
-                      <p className="font-medium">{new Date(paymentDetails.date).toLocaleString()}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Payment Method</p>
-                      <p className="font-medium">Paystack</p>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="border-t border-gray-200 pt-6">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Customer Information</h3>
-                  <div className="flex items-center space-x-4">
-                    <div className="bg-gray-200 border-2 border-dashed rounded-xl w-16 h-16" />
-                    <div>
-                      <p className="font-medium">{paymentDetails.customer.name}</p>
-                      <p className="text-gray-600">{paymentDetails.customer.email}</p>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex justify-between pt-8">
-                  <button className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors">
-                    View Order History
-                  </button>
-                  <button className="px-6 py-3 bg-indigo-600 rounded-lg text-white font-medium hover:bg-indigo-700 transition-colors">
-                    Continue Shopping
-                  </button>
-                </div>
+              ))}
+
+              <div className="flex justify-between font-bold border-t pt-4">
+                <div>Total</div>
+                <div>₦{orderDetails.totalAmount.toLocaleString()}</div>
               </div>
-            )}
-            
-            {(paymentStatus === 'failed' || paymentStatus === 'error') && (
-              <div className="text-center py-12">
-                <div className="w-20 h-20 mx-auto mb-6 bg-red-100 rounded-full flex items-center justify-center">
-                  <svg className="w-12 h-12 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-                  </svg>
-                </div>
-                <h2 className="text-xl font-semibold text-gray-800">Payment Verification Failed</h2>
-                <p className="text-gray-600 mt-4 max-w-md mx-auto">{error}</p>
-                <div className="mt-8 space-x-4">
-                  <button className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors" >
-                    Try Again
-                  </button>
-                  <button className="px-6 py-3 bg-indigo-600 rounded-lg text-white font-medium hover:bg-indigo-700 transition-colors">
-                    Contact Support
-                  </button>
-                </div>
+            </div>
+
+            {/* Shipping Information */}
+            <div className="mt-8">
+              <h2 className="text-xl font-semibold mb-4">Shipping Details</h2>
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <p>{orderDetails.shippingAddress.street}</p>
+                <p>
+                  {orderDetails.shippingAddress.city}, {orderDetails.shippingAddress.state}
+                </p>
+                <p>{orderDetails.shippingAddress.country}</p>
               </div>
-            )}
+            </div>
+
+            {/* Payment Reference */}
+            <div className="mt-6">
+              <p className="text-sm text-gray-500">Payment Reference</p>
+              <p className="font-mono">{orderDetails.paymentDetails.reference}</p>
+            </div>
+
+            {/* Actions */}
+            <div className="mt-8 flex justify-between">
+              <button 
+                onClick={() => navigate('/orders')}
+                className="px-4 py-2 border rounded-md hover:bg-gray-50"
+              >
+                View Orders
+              </button>
+              <button 
+                onClick={() => navigate('/')}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+              >
+                Continue Shopping
+              </button>
+            </div>
           </div>
-          
-          {/* Footer */}
-          <div className="bg-gray-50 px-6 py-4 text-center">
-            <p className="text-sm text-gray-600">
-              Need help? Contact our support team at <span className="text-indigo-600">info@icedeluxewears.com
-</span>
-            </p>
+
+          <div className="mt-8 text-center text-sm text-gray-500">
+            <p>Need help? Contact support at <a href="mailto:info@icedeluxewears.com" className="text-indigo-600">info@icedeluxewears.com</a></p>
+            <p className="mt-1">© {new Date().getFullYear()} IceDeluxeWears. All rights reserved.</p>
           </div>
         </div>
-        
+      </div>
+    );
+  }
+
+  // Error/Failed state
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <XCircle className="w-16 h-16 mx-auto text-red-500" />
+        <h1 className="text-2xl font-bold mt-4">Payment Verification Failed</h1>
+        <p className="mt-2 text-red-600">{error}</p>
+        <button 
+          onClick={() => navigate('/')}
+          className="mt-6 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+        >
+          Return Home
+        </button>
         <div className="mt-8 text-center text-sm text-gray-500">
-          <p>© {new Date().getFullYear()} IceDeluxeWears. All rights reserved.</p>
+          <p>Need help? Contact support at <a href="mailto:info@icedeluxewears.com" className="text-indigo-600">info@icedeluxewears.com</a></p>
+          <p className="mt-1">© {new Date().getFullYear()} IceDeluxeWears. All rights reserved.</p>
         </div>
       </div>
     </div>
-  )
+  );
 }
