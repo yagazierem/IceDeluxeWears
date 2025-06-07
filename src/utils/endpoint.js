@@ -118,7 +118,7 @@ const Endpoint = {
     return axios.get(`/admin/customers/${customerId}`, data);
   },
   verifyPayment: (reference, data) => {
-    return axios.get(`/verify-payment/paystack/${reference}`, data);
+    return axios.get(`/checkout/verify-payment/${reference}`, data);
   },
   getShippingZones: (data) => {
     return axios.get(`/shipping/admin/zones`, data);
