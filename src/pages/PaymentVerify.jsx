@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { CheckCircle, XCircle, Loader2, AlertCircle } from 'lucide-react';
 import Endpoint from '../utils/endpoint';
+import { useParams } from 'react-router-dom';
 
 
 export default function PaymentVerify() {
@@ -9,34 +10,40 @@ export default function PaymentVerify() {
    const [paymentDetails, setPaymentDetails] = useState(null);
   const [reference, setReference] = useState('');
    const [error, setError] = useState('');
+     const { transactionId } = useParams();
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const refFromUrl = urlParams.get('reference') 
     console.log(refFromUrl, "refFromUrl")
-    
-    if (refFromUrl) {
-      setReference(refFromUrl);
-      verifyPayment(refFromUrl);
+
+       const paymentReference = refFromUrl || transactionId;
+
+    if (paymentReference) {
+      setReference(paymentReference);
+      verifyPayment(paymentReference);
     } else {
       setPaymentStatus('error');
+      setError('No payment reference found');
     }
-  }, []);
+  }, [transactionId]);
 
-  const verifyPayment = async (paymentReference) => {
+ const verifyPayment = async (paymentReference) => {
     try {
-     const response = await Endpoint.verifyPayment(paymentReference)
-        console.log(response, "RESPONSEEE====")
+      const response = await Endpoint.verifyPayment(paymentReference);
+      console.log(response, "RESPONSEEE====");
+      
       if (response.status === 'success') {
         setPaymentStatus('success');
         setPaymentDetails(response.data);
       } else {
         setPaymentStatus('failed');
-       setError('Payment verification failed');
+        setError(response.message || 'Payment verification failed');
       }
     } catch (error) {
       console.error('Payment verification error:', error);
       setPaymentStatus('error');
+      setError(error.message || 'Error verifying payment');
     }
   };
 

@@ -28,7 +28,7 @@ function App() {
         <AuthProvider>
           <Routes>
             {/* Customer routes wrapped in Layout */}
-            <Route path="paymentVerify" element={<PaymentVerify />} />
+            <Route path="/paymentVerify/:transactionId" element={<PaymentVerify />} />
 
             <Route element={<Layout />}>
               <Route index element={<HomePage />} />
